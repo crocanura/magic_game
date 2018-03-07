@@ -6,6 +6,7 @@ import pygame.math as pgmath
 import math_tools
 import clock
 import collidables
+import random as rn
 
 class Missile(Base_spell):
 
@@ -21,6 +22,7 @@ class Missile(Base_spell):
 		
 		self.port_corner = None
 		self.starboard_corner = None
+		self.back = None
 
 		self.previous_position = self.position
 		self.collidables = [collidables.Collision_segment(self.previous_position, self.position)]
@@ -35,10 +37,10 @@ class Missile(Base_spell):
 
 	def update_fins(self):
 		vec = pgmath.Vector2(*math_tools.cartesian_from_polar(10.0+self.power, 180+self.direction))
-		back = self.position + vec
+		self.back = self.position + vec
 		vec = pgmath.Vector2(*math_tools.cartesian_from_polar(5.0, 90+self.direction))
-		self.port_corner = back + vec
-		self.starboard_corner = back - vec
+		self.port_corner = self.back + vec
+		self.starboard_corner = self.back - vec
 
 
 	def update_velocity(self):
@@ -77,9 +79,18 @@ class Missile(Base_spell):
 			return
 
 		c_inner, c_outer = self.colouring()
+
+		for i in range(self.power):
+			bsc = rn.uniform(0,1)
+			b = (self.back - self.position) * bsc
+			s = (self.port_corner - self.back) * rn.uniform(-1,1) * bsc
+			p = self.back + b + s
+			# gfx.filled_circle(surface, int(p[0]), int(p[1]), 3, c_inner)
+			gfx.aacircle(surface, int(p[0]), int(p[1]), 3, c_outer)
 		# if not c_inner is None:
 		gfx.filled_polygon(surface, [self.position, self.port_corner, self.starboard_corner], c_inner)
 			# print "drew inner at %s, %s, %s" % (self.position, self.port_corner, self.starboard_corner)
 		# if not c_outer is None:
 		gfx.aapolygon(surface, [self.position, self.port_corner, self.starboard_corner], c_outer)
 			# print "drew outer at %s, %s, %s" % (self.position, self.port_corner, self.starboard_corner)
+
