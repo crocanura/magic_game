@@ -12,7 +12,7 @@ spell_moves = ['impact', 'vacuum', 'chaos']
 
 lookup = {}
 
-base_volume = 0.25
+base_volume = 0.40
 
 for t in types:
 	s = '%s_hit' % t
@@ -33,8 +33,11 @@ for t in types:
 lookup['missile_cast'].set_volume(base_volume/10)
 lookup['wave_cast'].set_volume(base_volume/4)
 lookup['chaos_cast'].set_volume(base_volume/4)
-lookup['vacuum_cast'].set_volume(base_volume*2.5)
+lookup['vacuum_cast'].set_volume(base_volume*2)
+lookup['impact_cast'].set_volume(base_volume*2)
 
 lookup['missile_hit'].set_volume(base_volume/10)
 lookup['wave_hit'].set_volume(base_volume/4)
 lookup['chaos_hit'].set_volume(base_volume/4)
+lookup['vacuum_hit'].set_volume(base_volume*2)
+lookup['impact_hit'].set_volume(base_volume*2)

@@ -25,14 +25,12 @@ class Missile(Base_spell):
 		self.back = None
 
 		self.previous_position = self.position
-		self.collidables = [collidables.Collision_segment(self.previous_position, self.position)]
+		self.collidables = [collidables.Collision_segment(self.previous_position, self.position), None, None]
 
 		self.update_fins()
 
 		self.velocity = pgmath.Vector2
 		self.update_velocity()
-
-		self.dead = False
 
 
 	def update_fins(self):
@@ -42,12 +40,15 @@ class Missile(Base_spell):
 		self.port_corner = self.back + vec
 		self.starboard_corner = self.back - vec
 
+		self.collidables[1] = collidables.Collision_segment(self.position, self.port_corner)
+		self.collidables[2] = collidables.Collision_segment(self.position, self.starboard_corner)
+
 
 	def update_velocity(self):
 		self.velocity = pgmath.Vector2(*math_tools.cartesian_from_polar(200+100*self.power, self.direction))
 
 	def tick_update(self):
-		if self.dead:
+		if self.status == 'dead':
 			return
 
 		self.previous_position = self.position
@@ -61,10 +62,10 @@ class Missile(Base_spell):
 		
 		self.update_fins()
 
-		self.dead = True # maybe
+		self.status = 'dead' # maybe
 		for point in [self.position, self.port_corner, self.starboard_corner]:
 			if not self.point_out_of_bounds(point):
-				self.dead = False
+				self.status = 'alive'
 
 
 	def point_out_of_bounds(self, point):
@@ -75,7 +76,7 @@ class Missile(Base_spell):
 		return False
 
 	def draw(self, surface):
-		if self.dead:
+		if self.status == 'dead':
 			return
 
 		c_inner, c_outer = self.colouring()

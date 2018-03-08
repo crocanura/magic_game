@@ -73,14 +73,21 @@ def projection(a, b):
 	return b*(b.dot(a))/(b.length()**2)
 
 def segment_hits_circle(a, b, c, r):
+
+	# print "Checked %s, %s, %s, %s" % (a,b,c,r)
+
+
 	if a.distance_to(c) <= r or b.distance_to(c) <= r:
+		# print "determined intersection"
 		return True
 
 	vec = c - a
 	to_d = projection(vec, b-a)
 	d = a + to_d
 
-	if d.distance_to(c) <= r:
+	if on_segment(a, d, b) and d.distance_to(c) <= r:
+		# print "determined intersection"
 		return True
 
+	# print "determined no intersection"
 	return False

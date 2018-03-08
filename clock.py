@@ -14,7 +14,7 @@ def next_tick():
 	a = time.time()
 	counter = 0
 
-	# print "clock: %2.2f%% of a tick to spare" % (100*(last_tick + tick_time - a)/tick_time)
+	print "clock: %2.2f%% of a tick to spare" % (100*(last_tick + tick_time - a)/tick_time)
 
 	while a < last_tick + tick_time:
 		# time.sleep(tick_time/10.0)

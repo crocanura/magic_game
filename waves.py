@@ -15,16 +15,27 @@ class Wave(Base_spell):
 		self.radius = 0
 		self.collidables = [collidables.Collision_circle(self.position, self.radius)]
 
+		self.direction = None
+		self.death_animation = None
+
 
 	def tick_update(self):
-		# if rn.uniform(0,100) < 0.99**clock.GOAL_FPS:
-		# 	self.power -= 1
-		# if self.power <= 0:
-		# 	self.dead = True
+		if self.status == 'dead':
+			return
+		if self.status == 'dying':
+			self.death_animation -= 1
+			self.radius = max(0, self.radius - 120*np.sqrt(self.power)/clock.GOAL_FPS)
+
+			# print self.death_animation
+			if self.death_animation <= 0:
+				self.status = 'dead'
+				# print 'killed'
+			return
 
 		self.radius += 120*np.sqrt(self.power)/clock.GOAL_FPS
 		if self.radius > 50+25*self.power:
-			self.dead = True
+			self.status = 'dying'
+			self.death_animation = clock.GOAL_FPS / 4
 		else:
 			self.collidables[0].radius = self.radius
 
@@ -32,8 +43,12 @@ class Wave(Base_spell):
 
 
 	def draw(self, surface):
-		if self.dead:
+		if self.status == 'dead':
 			return
+		elif self.status == 'dying':
+			N = int(np.sqrt(self.power) * 10 * 4 * (float(self.death_animation) / clock.GOAL_FPS)**2)
+		else:
+			N = int(10 * np.sqrt(self.power))
 
 		c_inner, c_outer = self.colouring()
 
@@ -41,13 +56,17 @@ class Wave(Base_spell):
 		x = self.position[0]
 		y = self.position[1]
 
-		for i in range(int(10 * np.sqrt(self.power))):
+		for i in range(N):
 
 			# d = rn.uniform(0,360)
 			# gfx.pixel(surface, int(x+r*np.cos(d)), int(y+r*np.sin(d)), 3, c_inner)
-			d = rn.uniform(0,2*np.pi)
-			gfx.filled_circle(surface, int(x+r*np.cos(d)), int(y+r*np.sin(d)), 3, c_inner)
-			gfx.aacircle(surface, int(x+r*np.cos(d)), int(y+r*np.sin(d)), 3, c_outer)
+			if self.direction is None:
+				d = rn.uniform(0,360)
+			else:
+				s = 180 * 4 * (float(self.death_animation) / clock.GOAL_FPS)**2
+				d = self.direction + rn.uniform(-s,s)
+			gfx.filled_circle(surface, int(x+r*np.cos(np.radians(d))), int(y+r*np.sin(np.radians(d))), 3, c_inner)
+			gfx.aacircle(surface, int(x+r*np.cos(np.radians(d))), int(y+r*np.sin(np.radians(d))), 3, c_outer)
 		# gfx.aacircle(surface, int(self.position[0]), int(self.position[1]), int(self.radius)+1, c_outer)
 		# gfx.aacircle(surface, int(self.position[0]), int(self.position[1]), int(self.radius), c_inner)
 			

@@ -1,14 +1,6 @@
 import random as rn
 import pygame.math as pgmath
-
-
-gray = (128,128,128)
-scarlet = (255, 40, 0)
-purple = (180, 0, 255)
-blue = (0, 128, 255)
-black = (0,0,0)
-white = (255, 255, 255)
-
+from colours import *
 
 types = { }
 types[0] = { 0: None, 1:'damaging', 2: 'healing' }
@@ -47,7 +39,8 @@ class Base_spell(object):
 
         self.collidables = []
 
-        self.dead = False
+        self.status = 'alive'
+        self.death_animation = None
         
         if not self.valid():
             print("Ack!")

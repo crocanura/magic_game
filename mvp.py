@@ -8,6 +8,7 @@ import clock
 from base_spells import types as spell_types
 from missiles import Missile
 from waves import Wave
+from lightning import Lightning
 
 pygame.init()
 from sound_loader import lookup as sound_lookup
@@ -35,10 +36,10 @@ while not quit:
 
 		if event.type == pygame.KEYDOWN:
 			pos = pygame.mouse.get_pos()
+			to_center = pgmath.Vector2(width/2-pos[0], height/2-pos[1])
+			direction = to_center.as_polar()[1]
 
 			if event.key == pygame.K_m:
-				to_center = pgmath.Vector2(width/2-pos[0], height/2-pos[1])
-				direction = to_center.as_polar()[1]
 				things.append(Missile(pos, direction, [0, 0, width-1, height-1], random.randint(1,10), random.randint(0,2), random.randint(0,3)))
 				
 				a = things[-1].a
@@ -60,6 +61,16 @@ while not quit:
 				if b > 0:
 					sound_lookup[spell_types[1][b] + '_cast'].play()
 				sound_lookup['wave_cast'].play()
+
+			if event.key == pygame.K_l:
+				things.append(Lightning(pos, direction, random.randint(1,10), random.randint(0,2), random.randint(0,3)))
+
+				# a = things[-1].a
+				# if a > 0:
+				# 	sound_lookup[spell_types[0][a] + '_cast'].play()
+				# b = things[-1].b
+				# if b > 0:
+				# 	sound_lookup[spell_types[1][b] + '_cast'].play()
 	
 	if quit:
 		pygame.quit()
@@ -70,21 +81,29 @@ while not quit:
 
 	t = time.time()
 
-	for thing in things:
-		thing.tick_update()
+	list1 = things
+	for thing in list1:
 		thing.draw(screen)
-		if thing.dead:
+		if thing.status == 'dead':
+			# print 'removing'
 			things.remove(thing)
+			if type(thing) == Lightning:
+				sound_lookup['lightning_whiff'].play()
+			continue
+		thing.tick_update()
 
-	list1 = things[:]
-	list2 = things[:]
+	list1 = things
+	list2 = things
 	for thing in list1:
 		if thing not in things:
 			continue
-		if thing.dead:
-			things.remove(thing)
+		if thing.status == 'dead':
+			# things.remove(thing)
+			continue
+		if thing.status == 'dying':
+			continue
 		for other in list2:
-			if other not in things or other is thing:
+			if (other not in things) or (other is thing) or (other.status == 'dying') or (other.status == 'dead'):
 				continue
 			else:
 				hit = False
@@ -95,19 +114,34 @@ while not quit:
 							break
 					if hit: break
 				if hit:
-					if type(thing) == Missile and type(other) == Wave:
+					if type(thing) == Missile and type(other) != Missile:
 						other.absorb(thing)
-						thing.dead = True
-						things.remove(thing)
-					elif type(thing) == Wave and type(other) == Missile:
+						thing.status = 'dead'
+						# things.remove(thing)
+						continue
+					elif type(thing) != Missile and type(other) == Missile:
 						thing.absorb(other)
-						other.dead = True
-						things.remove(other)
-					else:
+						other.status = 'dead'
+						# things.remove(other)
+						continue
+					elif type(thing) == Missile or type(other) == Missile:
 						things.remove(thing)
-						thing.dead = True
+						thing.status = 'dead'
 						things.remove(other)
-						other.dead = True
+						other.status = 'dead'
+						continue
+					# if type(thing) == Lightning:
+					# 	thing.status = 'dying'
+					# else:
+					thing.status = 'dying'
+					thing.death_animation = clock.GOAL_FPS / 4
+					thing.direction = (other.position - thing.position).as_polar()[1]
+					# if type(other) == Lightning:
+					# 	other.status = 'dying'
+					# else:
+					other.status = 'dying'
+					other.death_animation = clock.GOAL_FPS / 4
+					other.direction = (thing.position - other.position).as_polar()[1]
 
 
 	pygame.display.flip()
