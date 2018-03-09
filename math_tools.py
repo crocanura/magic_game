@@ -21,13 +21,11 @@ def orientation(p, q, r):
 
 	val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
  
-	if (val == 0):
-		return 0
+	if (val == 0): return 0
  
-	elif val > 0:
-		return 1
+	elif val > 0: return 1
 
-	return 2
+	else: return 2
 
 
 def segments_intersect(v_1, v_2):
@@ -42,23 +40,22 @@ def segments_intersect(v_1, v_2):
 	o4 = orientation(p2, q2, q1)
  
 	
-	if o1 != o2 and o3 != o4:
-		return True
+	if o1 != o2 and o3 != o4: return True
  
 	## Special Cases
 	## p1, q1 and p2 are colinear and p2 lies on segment p1q1
-	if (o1 == 0 and on_segment(p1, p2, q1)): return True
+	elif (o1 == 0 and on_segment(p1, p2, q1)): return True
  
 	## p1, q1 and q2 are colinear and q2 lies on segment p1q1
-	if (o2 == 0 and on_segment(p1, q2, q1)): return True
+	elif (o2 == 0 and on_segment(p1, q2, q1)): return True
  
 	## p2, q2 and p1 are colinear and p1 lies on segment p2q2
-	if (o3 == 0 and on_segment(p2, p1, q2)): return True
+	elif (o3 == 0 and on_segment(p2, p1, q2)): return True
  
 	## p2, q2 and q1 are colinear and q1 lies on segment p2q2
-	if (o4 == 0 and on_segment(p2, q1, q2)): return True
+	elif (o4 == 0 and on_segment(p2, q1, q2)): return True
  
-	return False ## Doesn't fall in any of the above cases
+	else: return False ## Doesn't fall in any of the above cases
 
 
 
@@ -70,16 +67,22 @@ def projection(a, b):
 	if a.length() == 0 or b.length() == 0:
 		return pgmath.Vector2(0,0)
 
-	return b*(b.dot(a))/(b.length()**2)
+	else: return b*(b.dot(a))/(b.length()**2)
 
+grace = 0.000001
 def segment_hits_circle(a, b, c, r):
 
 	# print "Checked %s, %s, %s, %s" % (a,b,c,r)
 
+	ad = a.distance_to(c)
+	bd = b.distance_to(c)
 
-	if a.distance_to(c) <= r or b.distance_to(c) <= r:
-		# print "determined intersection"
-		return True
+	if ad == r or bd == r: return True
+
+	elif ad < r or bd < r:
+		if ad > r or bd > r: # one but not both inside
+			return True
+		else: return False # fully enveloped
 
 	vec = c - a
 	to_d = projection(vec, b-a)
@@ -87,7 +90,26 @@ def segment_hits_circle(a, b, c, r):
 
 	if on_segment(a, d, b) and d.distance_to(c) <= r:
 		# print "determined intersection"
-		return True
+		if d.distance_to(c) > grace: return True
 
 	# print "determined no intersection"
 	return False
+
+
+def segment_enveloped_by_circle(a, b, c, r):
+	if a.distance_to(c) <= r and b.distance_to(c) <= r:
+		return True
+	else:
+		return False
+
+
+def circles_far(a, ra, b, rb):
+	if a.distance_to(b) <= ra + rb:
+		return False
+	else: return True
+
+def circle_enveloped_by_circle(a, ra, b, rb):
+	if a.distance_to(b) + ra < rb:
+		return True
+	else:
+		return False

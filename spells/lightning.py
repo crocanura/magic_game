@@ -40,8 +40,15 @@ class Lightning(Base_spell):
 
 
 		current_depth = len(self.branches)
-		branch_start = min(rn.randint(0, current_depth * 2), current_depth - 1)
+
+		m = int(current_depth * 0.5)
+		M = int(current_depth * 1.2)
+		branch_start = min(rn.randint(m, M), current_depth - 1)
+		# M = current_depth - 0.0001
+		# branch_start = int((rn.uniform(0, 1)**(1/2)*M)
+
 		starting_point = rn.choice([segment.p2 for segment in self.branches[branch_start]])
+
 		# print branch_start
 		if branch_start >= 3 + self.power:
 			self.status = 'dead'

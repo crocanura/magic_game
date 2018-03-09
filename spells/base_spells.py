@@ -41,6 +41,8 @@ class Base_spell(object):
 
         self.status = 'alive'
         self.death_animation = None
+
+        self.lives_inside = [] # waves to provide opposite envelopment hits
         
         if not self.valid():
             print("Ack!")

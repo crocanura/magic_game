@@ -22,9 +22,9 @@ class Missile(Base_spell):
 		
 		self.port_corner = None
 		self.starboard_corner = None
-		self.back = None
+		self.back = self.position + pgmath.Vector2(*math_tools.cartesian_from_polar(10.0+self.power, 180+self.direction))
 
-		self.previous_position = self.position
+		self.previous_position = self.back
 		self.collidables = [collidables.Collision_segment(self.previous_position, self.position), None, None]
 
 		self.update_fins()
@@ -47,12 +47,15 @@ class Missile(Base_spell):
 	def update_velocity(self):
 		self.velocity = pgmath.Vector2(*math_tools.cartesian_from_polar(200+100*self.power, self.direction))
 
+
 	def tick_update(self):
 		if self.status == 'dead':
 			return
 
 		self.previous_position = self.position
 		self.position = self.position + self.velocity/clock.GOAL_FPS
+
+		self.update_velocity()
 
 		# advance collision segment
 		tmp = self.collidables[0].p1
@@ -81,7 +84,7 @@ class Missile(Base_spell):
 
 		c_inner, c_outer = self.colouring()
 
-		for i in range(self.power):
+		for i in range(min(self.power, 3)):
 			bsc = rn.uniform(0,1)
 			b = (self.back - self.position) * bsc
 			s = (self.port_corner - self.back) * rn.uniform(-1,1) * bsc

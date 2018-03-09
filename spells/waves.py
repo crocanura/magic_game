@@ -15,8 +15,10 @@ class Wave(Base_spell):
 		self.radius = 0
 		self.collidables = [collidables.Collision_circle(self.position, self.radius)]
 
-		self.direction = None
-		self.death_animation = None
+		self.direction = None # used for death animation
+
+		self.should_contain = [] # these things should only count hits when they appear outside the wave,
+		# since they were inside when they spawned
 
 
 	def tick_update(self):
