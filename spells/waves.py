@@ -9,7 +9,7 @@ import random as rn
 import collidables
 
 class Wave(Base_spell):
-	def __init__(self, position, power=1, a=0, b=0):
+	def __init__(self, position=(0,0), power=1, a=0, b=0):
 		Base_spell.__init__(self, power, a, b, types[2]['wave'], position)
 
 		self.radius = 0
@@ -17,7 +17,7 @@ class Wave(Base_spell):
 
 		self.direction = None # used for death animation
 
-		self.should_contain = [] # these things should only count hits when they appear outside the wave,
+		self.should_contain = set() # these things should only count hits when they appear outside the wave,
 		# since they were inside when they spawned
 
 
@@ -36,13 +36,15 @@ class Wave(Base_spell):
 
 		self.radius += 120*np.sqrt(self.power)/clock.GOAL_FPS
 		if self.radius > 50+25*self.power:
-			self.status = 'dying'
-			self.death_animation = clock.GOAL_FPS / 4
+			self.kill()
 		else:
 			self.collidables[0].radius = self.radius
 
-		
 
+	def kill(self):
+		self.status = 'dying'
+		self.death_animation = clock.GOAL_FPS / 4
+		
 
 	def draw(self, surface):
 		if self.status == 'dead':

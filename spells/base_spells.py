@@ -1,11 +1,8 @@
+from common import *
+
 import random as rn
 import pygame.math as pgmath
-from colours import *
-
-types = { }
-types[0] = { 0: None, 1:'damaging', 2: 'healing' }
-types[1] = { 0: None, 1: 'impact', 2: 'chaos', 3: 'vacuum' }
-types[2] = { 0: 'missile', 1:'lightning', 2:'wave', 3:'charge', 4:'pulse'}
+from game_objects import Game_object
 
 a_colours = [None, black, white]
 b_colours = [None, scarlet, purple, blue]
@@ -28,24 +25,21 @@ def random_spell(max_power=1, min_power=1):
 
 
 
-class Base_spell(object):
+class Base_spell(Game_object):
     def __init__(self, power=1, a=0, b=0, c=0, position=(0,0)):
+        Game_object.__init__(self, position)
+
         self.a = a
         self.b = b
         self.c = c
         
-        self.position = pgmath.Vector2(position)
         self.power = power
 
-        self.collidables = []
-
-        self.status = 'alive'
-        self.death_animation = None
-
-        self.lives_inside = [] # waves to provide opposite envelopment hits
+        # self.lives_inside = [] # waves to provide opposite envelopment hits
         
         if not self.valid():
             print("Ack!")
+
         
     def valid(self):
         if self.a < 0 or self.b < 0 or self.c < 0:
@@ -79,8 +73,20 @@ class Base_spell(object):
         return (ca, cb)
 
     
+    def spell_attribute(self, x):
+        if x in [0, 'a', 'effect']:
+            return types[0][self.a]
+        if x in [1, 'b', 'push']:
+            return types[1][self.b]
+        if x in [2, 'c', 'shape']:
+            return types[2][self.c]
+
+    
     def __str__(self):
         st = ""
+
+        if self.status != 'living':
+            st += self.status + " "
         
         st1 = types[0][self.a]
         if not st1 is None:

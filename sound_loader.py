@@ -2,7 +2,7 @@ import pygame.mixer as mix
 from spells.base_spells import types as spell_types
 
 # mix.pre_init(frequency=22050, size=-16, channels=2, buffer=4096)
-mix.init(frequency=22050, size=-16, channels=2, buffer=4096)
+mix.init(frequency=22050, size=-16, channels=16, buffer=4096)
 
 types = ['damaging','healing', 'impact', 'vacuum', 'chaos', 'wave', 'lightning', 'charge', 'pulse', 'missile']
 exceptions = ['lightning', 'pulse']
@@ -13,7 +13,7 @@ spell_moves = ['impact', 'vacuum', 'chaos']
 
 lookup = {}
 
-base_volume = 0.40
+base_volume = 0.25
 
 for t in types:
 	s = '%s_hit' % t
@@ -37,6 +37,7 @@ lookup['chaos_cast'].set_volume(base_volume/4)
 lookup['vacuum_cast'].set_volume(base_volume)
 lookup['impact_cast'].set_volume(base_volume*4)
 lookup['charge_cast'].set_volume(base_volume*2)
+lookup['damaging_cast'].set_volume(base_volume*2)
 
 lookup['missile_hit'].set_volume(base_volume/4)
 # lookup['wave_hit'].set_volume(base_volume)
@@ -45,6 +46,8 @@ lookup['vacuum_hit'].set_volume(base_volume)
 lookup['impact_hit'].set_volume(base_volume*4)
 lookup['charge_hit'].set_volume(base_volume*2)
 lookup['healing_hit'].set_volume(base_volume*2)
+
+lookup['pulse_whiff'].set_volume(base_volume*4)
 
 
 
@@ -84,4 +87,6 @@ def death_sounds(spell):
 		sounds.append(lookup[spell_types[2][spell.c] + '_whiff'])
 	elif spell_types[2][spell.c] == 'charge':
 		sounds.append(lookup['charge_hit'])
+
+	return sounds
 

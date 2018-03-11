@@ -11,7 +11,7 @@ import random as rn
 
 
 class Charge(Base_spell):
-	def __init__(self, position, power=1, a=0, b=0):
+	def __init__(self, position=(0,0), power=1, a=0, b=0):
 		Base_spell.__init__(self, power, a, b, types[2]['charge'], position)
 
 		self.radius = 3+power
@@ -53,8 +53,8 @@ class Charge(Base_spell):
 
 		self.arm_update()
 
-		if self.ticks > self.power * clock.GOAL_FPS * 5:
-			self.status = 'dead'
+		# if self.ticks > self.power * clock.GOAL_FPS * 5:
+		# 	self.kill()
 
 
 

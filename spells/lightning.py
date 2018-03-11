@@ -10,7 +10,7 @@ import collidables
 import random as rn
 
 class Lightning(Base_spell):
-	def __init__(self, position, direction, power=1, a=0, b=0):
+	def __init__(self, position=(0,0), direction=0, power=1, a=0, b=0):
 		Base_spell.__init__(self, power, a, b, types[2]['lightning'], position)
 
 		# self.tree = {self.position}
@@ -35,7 +35,7 @@ class Lightning(Base_spell):
 		if self.status == 'dying':
 			self.death_animation -= 1
 			if self.death_animation <= 0:
-				self.status = 'dead'
+				self.kill()
 			return
 
 
@@ -51,7 +51,7 @@ class Lightning(Base_spell):
 
 		# print branch_start
 		if branch_start >= 3 + self.power:
-			self.status = 'dead'
+			self.kill()
 			self.death_animation = clock.GOAL_FPS / 4
 			return
 		

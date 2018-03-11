@@ -1,232 +1,243 @@
+from common import *
+
+import clock
+import spells.interface
+import collider
+import math_tools
+
 import sys, pygame, random, math, time
-# import pygame.gfxdraw
+
 import pygame.math as pgmath
 import pygame.mixer as mix
 
-import clock
-
-from spells.base_spells import types as spell_types
-import spells.interface
-
 pygame.init()
+mix.init(frequency=22050, size=-16, channels=16, buffer=4096)
 from sound_loader import lookup as sound_lookup
 import sound_loader
 
 # sound_lookup['healing_cast'].play()
-
-size = width, height = 1000, 700
 black = 0, 0, 0
 bg = 64, 64, 64
 
-screen = pygame.display.set_mode(size)
-
 key_to_c = {}
-key_to_c[pygame.K_m] = spell_types[2]['missile']
-key_to_c[pygame.K_o] = spell_types[2]['wave']
-key_to_c[pygame.K_l] = spell_types[2]['lightning']
-key_to_c[pygame.K_p] = spell_types[2]['pulse']
-key_to_c[pygame.K_k] = spell_types[2]['charge']
+key_to_c[pygame.K_m] = types['shape']['missile']
+key_to_c[pygame.K_o] = types['shape']['wave']
+key_to_c[pygame.K_l] = types['shape']['lightning']
+key_to_c[pygame.K_p] = types['shape']['pulse']
+key_to_c[pygame.K_k] = types['shape']['charge']
 
-quit = False
 
-recipe = [0, 0, 0, 0]
+class Game(object):
+	def __init__(self, width=1000, height=800):
 
-living_spells = []
+		self.width, self.height = width, height
+		self.bounds = [0,0, width - 1, height - 1]
 
-while not quit:
-	
+		size = width, height
+		self.screen = pygame.display.set_mode(size)
 
-	for event in pygame.event.get():
-		if event.type == pygame.QUIT:
-			print living_spells
-			quit = True
-			break
+		self.spell_set = set()
+		self.objects = set()
 
-		if event.type == pygame.KEYDOWN:
 
-			if event.key == pygame.K_1:
-				recipe[0] = (recipe[0] + 1) % 3
-				print "Spell attribute a set to %s" % spell_types[0][recipe[0]]
-			if event.key == pygame.K_2:
-				recipe[1] = (recipe[1] + 1) % 4
-				print "Spell attribute a set to %s" % spell_types[1][recipe[1]]
-			if event.key == pygame.K_3:
-				recipe[2] = (recipe[2] + 1) % 5
-				print "Spell attribute a set to %s" % spell_types[2][recipe[2]]
-			# if event.key == pygame.K_4:
-				
+	def get_spells(self, func = lambda spell: True):
+		return list(filter(func, self.spell_set))
 
-		
-		if event.type == pygame.MOUSEBUTTONDOWN:
-			if event.button == 3:
-				recipe[3] += 1
-				print "Spell power set to %s" % recipe[3]
-				continue
-			elif event.button == 4:
-				recipe[3] += 1
-				print "Spell power set to %s" % recipe[3]
-				continue
-			elif event.button == 5:
-				recipe[3] = max(0, recipe[3] - 1)
-				print "Spell power set to %s" % recipe[3]
-				continue
-			elif event.button != 1:
-				continue
-				
-			if recipe[3] <= 0:
-				continue
 
-			cast_point = pgmath.Vector2(pygame.mouse.get_pos())
-			# to_center = pgmath.Vector2(width/2-pos[0], height/2-pos[1])
-			# direction = to_center.as_polar()[1]
+	def get_objects(self, func = lambda obj: True):
+		return list(filter(func, self.objects))
 
-			player_pos = pgmath.Vector2(width/2, height/2) # wild accusations
-			bounds = [0,0, width - 1, height - 1]
 
-			# a = spell_types[0][recipe[0]]
-			# b = spell_types[1][recipe[1]]
-			# c = spell_types[2][recipe[2]]
-			spell = spells.interface.create_spell(player_pos, cast_point, bounds, recipe[3], recipe[0], recipe[1], recipe[2])
-			recipe[3] = 0
+	def living_waves(self):
+		return list(filter(lambda spell: types['shape'][spell.c] == 'wave' and spell.status == 'living', self.spell_set))
 
-			sounds = sound_loader.cast_sounds(spell)
+
+	def add_object(self, obj):
+		self.objects.add(obj)
+
+
+	def add_spell(self, spell):
+		self.add_object(spell)
+
+		for wave in self.living_waves():
+			for c in spell.collidables:
+				if c.type == 'circle':
+					# print "looking at %s is a %s" % (c, 'circle')
+					if math_tools.circle_enveloped_by_circle(c.center, c.radius, wave.position, wave.radius):
+						wave.should_contain.add(spell)
+						# print "%s should contain %s" % (wave, spell)
+						break
+				elif c.type == 'segment':
+					# print "looking at %s is a %s" % (c, 'segment')
+					if math_tools.segment_enveloped_by_circle(c.p1, c.p2, wave.position, wave.radius):
+						wave.should_contain.add(spell)
+						# print "%s should contain %s" % (wave, spell)
+						break
+				elif c.type == 'point':
+					# print "looking at %s is a %s" % (c, 'point')
+					if c.point.distance_to(wave.position) < wave.radius:
+						wave.should_contain.add(spell)
+						# print "%s should contain %s" % (wave, spell)
+						break
+
+		self.spell_set.add(spell)
+
+
+	def update(self, func = lambda obj: True):
+		for obj in list(filter(func, self.objects)):
+			obj.tick_update()
+
+
+	def draw(self, func = lambda obj: True):
+		for obj in list(filter(func, self.objects)):
+			obj.draw(self.screen)
+
+
+	def purge(self, func = lambda obj: True):
+		for obj in list(filter(func, self.objects)):
+			self.objects.remove(obj)
+			if obj in self.spell_set:
+				self.spell_set.remove(obj)
+
+
+	def spell_collision_step(self):
+		spell_list = self.get_spells(lambda spell: spell.status == 'living')
+		collider.reset_collisions(spell_list)
+		blobs = collider.collision_blobs(spell_list)
+		for line in blobs:
+			print "found collision blob: %s" % str(line)
+		if blobs != []:
+			print ""
+
+		for blob in blobs:
+			if len(blob) <= 1:
+				print "length %d blob" % len(blob)
+				sys.exit()
+			elif len(blob) == 2:
+				if blob[0].spell_attribute('shape') == 'missile' and blob[1].spell_attribute('shape') != 'missile':
+					blob[1].absorb(blob[0])
+					blob[0].kill()
+					blob[0].silence()
+					continue
+				if blob[1].spell_attribute('shape') == 'missile' and blob[0].spell_attribute('shape') != 'missile':
+					blob[0].absorb(blob[1])
+					blob[1].kill()
+					blob[0].silence()
+					continue
+
+			new_spell = spells.interface.combined(blob, self.bounds)
+			self.add_spell(new_spell)
+			sounds = sound_loader.cast_sounds(new_spell)
 			for s in sounds: s.play()
+			for spell in blob:
+				spell.kill()
+				# if spell.spell_attribute('shape') not in ['lightning', 'pulse']:
+				# 	spell.silence()
+				# self.spell_set.remove(spell)
 
-			living_spells.append(spell)
 
+	def run(self):
 
+		quit = False
 
-			# if event.key == pygame.K_m:
-			# 	things.append(Missile(pos, direction, [0, 0, width-1, height-1], random.randint(1,10), random.randint(0,2), random.randint(0,3)))
+		recipe = [0, 0, 0, 1]
+
+		while not quit:
+
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					print self.spell_set
+					quit = True
+					break
+
+				if event.type == pygame.KEYDOWN:
+
+					if event.key == pygame.K_1:
+						recipe[0] = (recipe[0] + 1) % 3
+						print "Spell attribute a set to %s" % types[0][recipe[0]]
+					if event.key == pygame.K_2:
+						recipe[1] = (recipe[1] + 1) % 4
+						print "Spell attribute a set to %s" % types[1][recipe[1]]
+					if event.key == pygame.K_3:
+						recipe[2] = (recipe[2] + 1) % 5
+						print "Spell attribute a set to %s" % types[2][recipe[2]]
+					# if event.key == pygame.K_4:
+						
+
 				
-			# 	a = things[-1].a
-			# 	if a > 0:
-			# 		sound_lookup[spell_types[0][a] + '_cast'].play()
-			# 	b = things[-1].b
-			# 	if b > 0:
-			# 		sound_lookup[spell_types[1][b] + '_cast'].play()
-			# 	sound_lookup['missile_cast'].play()
+				if event.type == pygame.MOUSEBUTTONDOWN:
+					if event.button == 3:
+						recipe[3] += 1
+						print "Spell power set to %s" % recipe[3]
+						continue
+					elif event.button == 4:
+						recipe[3] += 1
+						print "Spell power set to %s" % recipe[3]
+						continue
+					elif event.button == 5:
+						recipe[3] = max(0, recipe[3] - 1)
+						print "Spell power set to %s" % recipe[3]
+						continue
+					elif event.button != 1:
+						continue
+						
+					if recipe[3] <= 0:
+						continue
+
+					cast_point = pgmath.Vector2(pygame.mouse.get_pos())
+
+					player_pos = pgmath.Vector2(self.width/2, self.height/2) # wild accusations
+
+					spell = spells.interface.create_spell(player_pos, cast_point, self.bounds, recipe[3], recipe[0], recipe[1], recipe[2])
+					recipe[3] = 1
+
+					sounds = sound_loader.cast_sounds(spell)
+					for s in sounds: s.play()
+
+					self.add_spell(spell)
+
+			
+			if quit:
+				pygame.quit()
+				break
 
 
-			# if event.key == pygame.K_o:
-			# 	things.append(Wave(pos, random.randint(1,10), random.randint(0,2), random.randint(0,3)))
+			self.screen.fill(bg)
 
-			# 	a = things[-1].a
-			# 	if a > 0:
-			# 		sound_lookup[spell_types[0][a] + '_cast'].play()
-			# 	b = things[-1].b
-			# 	if b > 0:
-			# 		sound_lookup[spell_types[1][b] + '_cast'].play()
-			# 	sound_lookup['wave_cast'].play()
+			self.update(lambda obj: True)
 
-			# if event.key == pygame.K_k:
-			# 	things.append(Charge(pos, random.randint(1,10), random.randint(0,2), random.randint(0,3)))
+			for spell in self.get_spells(lambda spell: spell.status == 'dead'):
+				if not spell.silenced:
+					sounds = sound_loader.death_sounds(spell)
+					for s in sounds:
+						s.play()
+				self.spell_set.remove(spell)
+				self.objects.remove(spell)
 
-			# 	a = things[-1].a
-			# 	if a > 0:
-			# 		sound_lookup[spell_types[0][a] + '_cast'].play()
-			# 	b = things[-1].b
-			# 	if b > 0:
-			# 		sound_lookup[spell_types[1][b] + '_cast'].play()
-			# 	sound_lookup['charge_cast'].play()
+			self.spell_collision_step()
+			
+			self.draw(lambda obj: True)
 
-			# if event.key == pygame.K_l:
-			# 	things.append(Lightning(pos, direction, random.randint(1,10), random.randint(0,2), random.randint(0,3)))
+			# ls = self.get_spells()
+			# for spell in ls:
+			# 	spell.tick_update()
+			# 	spell.draw(screen)
 
-			# if event.key == pygame.K_p:
-			# 	things.append(Pulse(pos, direction, random.randint(1,10), random.randint(0,2), random.randint(0,3)))
+			# 	if spell.status == 'dead':
+			# 		living_spells.remove(spell)
+			# 		sounds = sound_loader.hit_sounds(spell)
+			# 		for s in sounds:
+			# 			s.play()
 
-	
-	if quit:
-		pygame.quit()
-		break
-
-
-	screen.fill(bg)
-
-	ls = living_spells
-	for spell in ls:
-		if spell.status == 'dead':
-			living_spells.remove(spell)
-			sounds = sound_loader.hit_sounds(spell)
-			for s in sounds:
-				s.play()
-		else:
-			spell.draw(screen)
-			spell.tick_update()
-
-	t = time.time()
+			t = time.time()
 
 
 
-	# list1 = things
-	# for thing in list1:
-	# 	thing.draw(screen)
-	# 	if thing.status == 'dead':
-	# 		# print 'removing'
-	# 		things.remove(thing)
-	# 		if type(thing) == Lightning:
-	# 			sound_lookup['lightning_whiff'].play()
-	# 		if type(thing) == Pulse:
-	# 			sound_lookup['pulse_whiff'].play()
-	# 		continue
-	# 	thing.tick_update()
+			
+			pygame.display.flip()
 
-	# list1 = things
-	# list2 = things
-	# for thing in list1:
-	# 	if thing not in things:
-	# 		continue
-	# 	if thing.status == 'dead':
-	# 		# things.remove(thing)
-	# 		continue
-	# 	if thing.status == 'dying':
-	# 		continue
-	# 	for other in list2:
-	# 		if (other not in things) or (other is thing) or (other.status == 'dying') or (other.status == 'dead'):
-	# 			continue
-	# 		else:
-	# 			hit = False
-	# 			for i in thing.collidables:
-	# 				for j in other.collidables:
-	# 					if i.check_collision(j):
-	# 						hit = True
-	# 						break
-	# 				if hit: break
-	# 			if hit:
-	# 				print "HIT!"
-	# 				if type(thing) == Missile and type(other) != Missile:
-	# 					other.absorb(thing)
-	# 					thing.status = 'dead'
-	# 					# things.remove(thing)
-	# 					continue
-	# 				elif type(thing) != Missile and type(other) == Missile:
-	# 					thing.absorb(other)
-	# 					other.status = 'dead'
-	# 					# things.remove(other)
-	# 					continue
-	# 				elif type(thing) == Missile or type(other) == Missile:
-	# 					things.remove(thing)
-	# 					thing.status = 'dead'
-	# 					things.remove(other)
-	# 					other.status = 'dead'
-	# 					continue
-	# 				# if type(thing) == Lightning:
-	# 				# 	thing.status = 'dying'
-	# 				# else:
-					
-	# 				thing.status = 'dead'
-	# 				# thing.death_animation = clock.GOAL_FPS / 4
-	# 				# thing.direction = (other.position - thing.position).as_polar()[1]
-	# 				# if type(other) == Lightning:
-	# 				# 	other.status = 'dying'
-	# 				# else:
-
-	# 				other.status = 'dead'
-	# 				# other.death_animation = clock.GOAL_FPS / 4
-	# 				# other.direction = (thing.position - other.position).as_polar()[1]
+			clock.next_tick()
 
 
-	pygame.display.flip()
-
-	clock.next_tick()
+G = Game()
+G.run()

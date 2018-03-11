@@ -10,7 +10,7 @@ import random as rn
 
 class Missile(Base_spell):
 
-	def __init__(self, position, direction, bounds, power=1, a=0, b=0):
+	def __init__(self, position=(0,0), direction=0, bounds=[0,0,0,0], power=1, a=0, b=0):
 		Base_spell.__init__(self, power, a, b, types[2]['missile'], position)
 
 

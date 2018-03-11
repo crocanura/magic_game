@@ -11,22 +11,36 @@ import random as rn
 
 
 class Pulse(Base_spell):
-	def __init__(self, position, direction, power=1, a=0, b=0):
+	def __init__(self, position=(0,0), direction=0, power=1, a=0, b=0):
 		
 		self.radius = 25 + 10 * power
 		vec = pgmath.Vector2(*math_tools.cartesian_from_polar(self.radius, direction))
 		Base_spell.__init__(self, power, a, b, types[2]['pulse'], position + vec)
 
 		self.collidables = [collidables.Collision_circle(self.position, self.radius)]
-		self.ticks_left = 1
+
+		self.tick_elapsed = False
 
 
 	def tick_update(self):
 		if self.status == 'dead:':
 			return
-		if self.ticks_left <= 0:
-			self.status = 'dead'
-		self.ticks_left -= 1
+		elif self.status == 'living':
+			if self.tick_elapsed:
+				self.kill()
+			else:
+				self.tick_elapsed = True
+		
+
+		if self.status == 'dying':
+			self.death_animation -= 1.0/clock.GOAL_FPS
+			if self.death_animation <= 0:
+				self.status = 'dead'
+
+
+	def kill(self):
+		self.death_animation = 0.100
+		self.status = 'dying'
 
 
 	def draw(self, surface):
