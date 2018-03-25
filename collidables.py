@@ -9,6 +9,11 @@ class Collision_point(Collidable):
 		Collidable.__init__(self, 'point')
 		self.location = point
 
+	def __str__(self):
+		return "Collision point: %s" % self.point
+	def __repr__(self):
+		return "CP:(%02.1f,%02.1f)" % (self.point[0], self.point[1])
+
 	def check_collision(self, other, inside_is_correct_place = False):
 		if other.type == 'point':
 			return self.point == other.point
@@ -32,6 +37,11 @@ class Collision_circle(Collidable):
 		Collidable.__init__(self, 'circle')
 		self.center = point
 		self.radius = radius
+
+	def __str__(self):
+		return "Collision circle: center: %s, radius %s" % (self.center, self.radius)
+	def __repr__(self):
+		return "CC:(%02.1f,%02.1f),%02.1f" % (self.center[0], self.center[1], self.radius)
 
 	def check_collision(self, other, inside_is_correct_place = False):
 		if other.type == 'point':
@@ -74,6 +84,11 @@ class Collision_segment(Collidable):
 		Collidable.__init__(self, 'segment')
 		self.p1 = point1
 		self.p2 = point2
+
+	def __str__(self):
+		return "Collision segment: point 1: %s, point 2 %s" % (self.p1, self.p2)
+	def __repr__(self):
+		return "CP:(%02.1f,%02.1f),(%02.1f,%02.1f)" % (self.p1[0], self.p1[1], self.p2[0], self.p2[1])
 
 	def check_collision(self, other, inside_is_correct_place = False):
 		if other.type == 'point':

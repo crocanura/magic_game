@@ -52,6 +52,9 @@ class Missile(Base_spell):
 		if self.status == 'dead':
 			return
 
+		# print self.collidables
+		# print "Status: %s" % self.status
+
 		self.previous_position = self.position
 		self.position = self.position + self.velocity/clock.GOAL_FPS
 
@@ -68,7 +71,7 @@ class Missile(Base_spell):
 		self.status = 'dead' # maybe
 		for point in [self.position, self.port_corner, self.starboard_corner]:
 			if not self.point_out_of_bounds(point):
-				self.status = 'alive'
+				self.status = 'living'
 
 
 	def point_out_of_bounds(self, point):

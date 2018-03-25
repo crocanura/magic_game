@@ -42,12 +42,17 @@ def collision_blobs(objs):
 			item1 = stack.pop()
 			to_skip = set()
 			for item2 in remaining:
-				if item2 in item1.checked_collisions: # assume they didn't collide
-					# item1.checked_collisions[item2] == False:
-					continue
+				if item2 in item1.checked_collisions:
+					if item1.checked_collisions[item2] == True:
+						blob.add(item1)
+						blob.add(item2)
+						stack.append(item2)
+						to_skip.add(item2)
+					else:
+						continue
 
 				# print "checking %s and %s for collision" % (item1, item2)
-				if item1.check_collision(item2):
+				elif item1.check_collision(item2):
 					# print "yes collision"
 					blob.add(item1)
 					blob.add(item2)

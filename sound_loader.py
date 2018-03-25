@@ -2,7 +2,6 @@ import pygame.mixer as mix
 from spells.base_spells import types as spell_types
 
 # mix.pre_init(frequency=22050, size=-16, channels=2, buffer=4096)
-mix.init(frequency=22050, size=-16, channels=16, buffer=4096)
 
 types = ['damaging','healing', 'impact', 'vacuum', 'chaos', 'wave', 'lightning', 'charge', 'pulse', 'missile']
 exceptions = ['lightning', 'pulse']

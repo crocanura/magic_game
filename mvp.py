@@ -104,6 +104,8 @@ class Game(object):
 		spell_list = self.get_spells(lambda spell: spell.status == 'living')
 		collider.reset_collisions(spell_list)
 		blobs = collider.collision_blobs(spell_list)
+		if blobs != []:
+			print ""
 		for line in blobs:
 			print "found collision blob: %s" % str(line)
 		if blobs != []:
@@ -126,6 +128,7 @@ class Game(object):
 					continue
 
 			new_spell = spells.interface.combined(blob, self.bounds)
+			print "Created new spell: %s" % new_spell
 			self.add_spell(new_spell)
 			sounds = sound_loader.cast_sounds(new_spell)
 			for s in sounds: s.play()

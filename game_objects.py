@@ -34,6 +34,10 @@ class Game_object(object):
 
 		self.checked_collisions[other] = val
 		other.checked_collisions[self] = val
+
+		# print "Checked collision between G.O. %s and G.O. %s" % (self, other)
+		# print "Determined collision %s" % val
+
 		return val
 
 
